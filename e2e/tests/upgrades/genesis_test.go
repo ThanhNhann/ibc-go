@@ -3,13 +3,13 @@ package upgrades
 import (
 	"context"
 	"encoding/json"
+	"os"
 	"testing"
 	"time"
-	"bytes"
+
 	tmjson "github.com/cometbft/cometbft/libs/json"
 	"github.com/cosmos/ibc-go/e2e/testconfig"
 	"github.com/cosmos/ibc-go/e2e/testsuite"
-	"github.com/docker/docker/api/types"
 	cosmos "github.com/strangelove-ventures/interchaintest/v7/chain/cosmos"
 	test "github.com/strangelove-ventures/interchaintest/v7/testutil"
 	"github.com/stretchr/testify/suite"
@@ -17,6 +17,7 @@ import (
 	"github.com/cosmos/ibc-go/e2e/dockerutil"
 	"github.com/cosmos/ibc-go/e2e/testvalues"
 )
+
 type GenesisState map[string]json.RawMessage
 
 func TestGenesisTestSuite(t *testing.T) {
@@ -33,13 +34,13 @@ func (s *GenesisTestSuite) TestIBCGenesis() {
 
 	configFileOverrides := make(map[string]any)
 	appTomlOverrides := make(test.Toml)
-	
+
 	appTomlOverrides["halt-height"] = haltHeight
 	configFileOverrides["config/app.toml"] = appTomlOverrides
-	chainOpts := func(options * testconfig.ChainOptions) {
-	    options.ChainAConfig.ConfigFileOverrides = configFileOverrides
+	chainOpts := func(options *testconfig.ChainOptions) {
+		options.ChainAConfig.ConfigFileOverrides = configFileOverrides
 	}
-	
+
 	// create chains with specified chain configuration options
 	chainA, chainB := s.GetChains(chainOpts)
 
@@ -112,9 +113,6 @@ func (s *GenesisTestSuite) HaltChainAndExportGenesis(ctx context.Context, chain 
 	err := test.WaitForBlocks(timeoutCtx, int(haltHeight), chain)
 	s.Require().Error(err, "chain did not halt at halt height")
 
-	err = chain.StopAllNodes(ctx)
-	s.Require().NoError(err, "error stopping node(s)")
-
 	state, err := chain.ExportState(ctx, int64(haltHeight))
 
 	s.Require().NoError(err)
@@ -122,22 +120,13 @@ func (s *GenesisTestSuite) HaltChainAndExportGenesis(ctx context.Context, chain 
 	s.Require().NoError(err)
 	genesisJson, err := tmjson.MarshalIndent(genesisState, "", "  ")
 	s.Require().NoError(err)
-
-
-
-	err = dockerutil.SetGenesisContentsToContainer(s.T(), ctx, s.E2ETestSuite.DockerClient ,chain.Config(), bytes.NewReader(genesisJson), types.CopyToContainerOptions{
-		AllowOverwriteDirWithFile: true,
-	})
+	err = os.WriteFile("/tmp/genesis.json", genesisJson, 0777)
 	s.Require().NoError(err)
 
-	for _, node := range chain.FullNodes {
-		err = node.UnsafeResetAll(ctx)
-		s.Require().NoError(err) 
-	}
-
-	// we are reinitializing the clients because we need to update the hostGRPCAddress after
-	// halt chain and subsequent restarting of nodes
-	s.InitGRPCClients(chain)
+	err = chain.Validators[0].StartContainer(ctx)
+	s.Require().NoError(err)
+	err = dockerutil.SetGenesisContentsToContainer(s.T(), ctx, chain)
+	s.Require().NoError(err)
 
 	timeoutCtx, timeoutCtxCancel = context.WithTimeout(ctx, time.Minute*2)
 	defer timeoutCtxCancel()

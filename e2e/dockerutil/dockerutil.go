@@ -6,11 +6,13 @@ import (
 	"fmt"
 	"io"
 	"path"
+	"strings"
 	"testing"
 
 	dockertypes "github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	dockerclient "github.com/docker/docker/client"
+	"github.com/strangelove-ventures/interchaintest/v7/chain/cosmos"
 	"github.com/strangelove-ventures/interchaintest/v7/ibc"
 )
 
@@ -73,35 +75,30 @@ func GetFileContentsFromContainer(ctx context.Context, dc *dockerclient.Client, 
 }
 
 // SetGenesisContentsToContainer set the contents of a specific file to a container.
-func SetGenesisContentsToContainer(t *testing.T, ctx context.Context, dc *dockerclient.Client, cfg ibc.ChainConfig, content io.Reader, options dockertypes.CopyToContainerOptions) error {
-	containerID, err := getDockerContainerID(t, ctx, cfg, dc)
-	if err != nil {
-		return err
-	}
-	genesisFilePath := chainAbsoluteGenesisFilePaths(cfg)
-	err = dc.CopyToContainer(ctx, containerID, genesisFilePath, content, options)
+func SetGenesisContentsToContainer(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain) error {
+	genesisFilePath := chainAbsoluteGenesisFilePaths(chain.Config())
+	err := chain.Validators[0].CopyFile(ctx, "/tmp/genesis.json", genesisFilePath)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-//chainAbsoluteGenesisFilePaths get absolute path of Genesis file of a chain
+// chainAbsoluteGenesisFilePaths get absolute path of Genesis file of a chain
 func chainAbsoluteGenesisFilePaths(cfg ibc.ChainConfig) string {
-	return fmt.Sprintf("/var/cosmos-chain/%s/config/genesis.json", cfg.Name)
+	return fmt.Sprintf("/var/cosmos-chain/%s/config", cfg.Name)
 }
 
-//getDockerContainerID get docker container id
+// getDockerContainerID get docker container id
 func getDockerContainerID(t *testing.T, ctx context.Context, cfg ibc.ChainConfig, dc *dockerclient.Client) (string, error) {
-	imageOfChain := cfg.Images[0].Repository
 	testContainers, err := GetTestContainers(t, ctx, dc)
 	if err != nil {
-		return  "", err
+		return "", err
 	}
 	for _, container := range testContainers {
-		if container.Image == imageOfChain {
+		if strings.Contains(container.Names[0], cfg.ChainID) {
 			return container.ID, nil
 		}
 	}
-	return "", fmt.Errorf("can't find container id")
+	return "", fmt.Errorf("Could not find container id")
 }
