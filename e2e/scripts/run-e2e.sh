@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -eo pipefail
+set -euo pipefail
 
 ENTRY_POINT="${1}"
 TEST="${2}"
