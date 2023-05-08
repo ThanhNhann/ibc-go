@@ -11,7 +11,7 @@ init:
 	./scripts/init.sh
 
 e2e-test: init cleanup-ibc-test-containers
-	./scripts/run-e2e.sh $(test) $(entrypoint)
+	./scripts/run-e2e.sh $(entrypoint) $(test)
 
 compatibility-tests:
 	./scripts/run-compatibility-tests.sh $(release_branch)
