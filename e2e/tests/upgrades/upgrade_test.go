@@ -34,6 +34,7 @@ import (
 
 const (
 	haltHeight         = uint64(100)
+	haltHeight2        = uint64(0)
 	blocksAfterUpgrade = uint64(10)
 )
 
