@@ -132,11 +132,17 @@ func (s *GenesisTestSuite) HaltChainAndExportGenesis(ctx context.Context, chain 
 	err = os.WriteFile("/tmp/genesis.json", genesisJson, 0777)
 	s.Require().NoError(err)
 
-	err = chain.Validators[0].StartContainer(ctx)
+	err = chain.StopAllNodes(ctx)
+	s.Require().NoError(err, "error stopping node(s)")
+
+	err = chain.StartAllNodes(ctx)
+	s.Require().NoError(err, "error starting node(s)")
+
 	s.Require().NoError(err)
 	err = dockerutil.SetGenesisContentsToContainer(s.T(), ctx, chain)
 	s.Require().NoError(err)
 
+	err = chain.Validators[0].UnsafeResetAll(ctx)
 	timeoutCtx, timeoutCtxCancel = context.WithTimeout(ctx, time.Minute*2)
 	defer timeoutCtxCancel()
 
