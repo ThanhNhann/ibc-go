@@ -3,6 +3,7 @@ package upgrades
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -135,6 +136,18 @@ func (s *GenesisTestSuite) HaltChainAndExportGenesis(ctx context.Context, chain 
 	err = chain.StopAllNodes(ctx)
 	s.Require().NoError(err, "error stopping node(s)")
 
+	configFileOverrides := make(map[string]any)
+	appTomlOverrides := make(test.Toml)
+	appTomlOverrides["halt-height"] = 0
+	configFileOverrides["config/app.toml"] = appTomlOverrides
+	chainOpts := func(options *testconfig.ChainOptions) {
+		options.ChainAConfig.ConfigFileOverrides = configFileOverrides
+	}
+
+	// create chains with specified chain configuration options
+	chain, chainb := s.GetChains(chainOpts)
+	fmt.Println(chainb)
+
 	err = chain.StartAllNodes(ctx)
 	s.Require().NoError(err, "error starting node(s)")
 
@@ -143,6 +156,8 @@ func (s *GenesisTestSuite) HaltChainAndExportGenesis(ctx context.Context, chain 
 	s.Require().NoError(err)
 
 	err = chain.Validators[0].UnsafeResetAll(ctx)
+	s.Require().NoError(err)
+
 	timeoutCtx, timeoutCtxCancel = context.WithTimeout(ctx, time.Minute*2)
 	defer timeoutCtxCancel()
 
