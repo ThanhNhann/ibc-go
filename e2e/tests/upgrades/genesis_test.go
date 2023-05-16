@@ -135,14 +135,15 @@ func (s *GenesisTestSuite) HaltChainAndExportGenesis(ctx context.Context, chain 
 	err = chain.StopAllNodes(ctx)
 	s.Require().NoError(err, "error stopping node(s)")
 
+	err = dockerutil.SetGenesisContentsToContainer(s.T(), ctx, chain)
+	s.Require().NoError(err)
+
 	err = dockerutil.ReconfigureHaltHeight(s.T(), ctx, chain)
 	s.Require().NoError(err)
 
 	err = chain.StartAllNodes(ctx)
 	s.Require().NoError(err, "error starting node(s)")
 
-	s.Require().NoError(err)
-	err = dockerutil.SetGenesisContentsToContainer(s.T(), ctx, chain)
 	s.Require().NoError(err)
 
 	err = chain.Validators[0].UnsafeResetAll(ctx)
