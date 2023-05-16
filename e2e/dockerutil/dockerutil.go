@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"path"
-	"strings"
 	"testing"
 
 	dockertypes "github.com/docker/docker/api/types"
@@ -85,7 +84,8 @@ func SetGenesisContentsToContainer(t *testing.T, ctx context.Context, chain *cos
 
 func ReconfigureHaltHeight(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain) error {
 	filePath := chainAbsoluteGenesisFilePaths(chain.Config())
-	_, _, err := chain.Validators[0].Exec(ctx, []string{"sed -i", "\"s/halt-height = .*/halt-height = \"0\"/\"", filePath}, nil)
+	cmd := "sed -i \"s/halt-height = .*/halt-height = \"0\"/\""
+	_, _, err := chain.Validators[0].Exec(ctx, []string{cmd, filePath}, nil)
 	if err != nil {
 		return err
 	}
@@ -98,15 +98,15 @@ func chainAbsoluteGenesisFilePaths(cfg ibc.ChainConfig) string {
 }
 
 // getDockerContainerID get docker container id
-func getDockerContainerID(t *testing.T, ctx context.Context, cfg ibc.ChainConfig, dc *dockerclient.Client) (string, error) {
-	testContainers, err := GetTestContainers(t, ctx, dc)
-	if err != nil {
-		return "", err
-	}
-	for _, container := range testContainers {
-		if strings.Contains(container.Names[0], cfg.ChainID) {
-			return container.ID, nil
-		}
-	}
-	return "", fmt.Errorf("Could not find container id")
-}
+// func getDockerContainerID(t *testing.T, ctx context.Context, cfg ibc.ChainConfig, dc *dockerclient.Client) (string, error) {
+// 	testContainers, err := GetTestContainers(t, ctx, dc)
+// 	if err != nil {
+// 		return "", err
+// 	}
+// 	for _, container := range testContainers {
+// 		if strings.Contains(container.Names[0], cfg.ChainID) {
+// 			return container.ID, nil
+// 		}
+// 	}
+// 	return "", fmt.Errorf("Could not find container id")
+// }
