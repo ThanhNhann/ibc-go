@@ -135,10 +135,7 @@ func (s *GenesisTestSuite) HaltChainAndExportGenesis(ctx context.Context, chain 
 	err = chain.StopAllNodes(ctx)
 	s.Require().NoError(err, "error stopping node(s)")
 
-	appTomlOverrides := make(test.Toml)
-	appTomlOverrides["halt-height"] = haltHeight2
-	chain.Config().ConfigFileOverrides["config/app.toml"] = appTomlOverrides
-
+	dockerutil.ReconfigureHaltHeight(s.T(), ctx, chain)
 	err = chain.StartAllNodes(ctx)
 	s.Require().NoError(err, "error starting node(s)")
 

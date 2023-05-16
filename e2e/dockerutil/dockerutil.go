@@ -83,6 +83,15 @@ func SetGenesisContentsToContainer(t *testing.T, ctx context.Context, chain *cos
 	return nil
 }
 
+func ReconfigureHaltHeight(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain) error {
+	filePath := chainAbsoluteGenesisFilePaths(chain.Config())
+	_, _, err := chain.Validators[0].Exec(ctx, []string{"sed -i", "\"s/halt-height = .*/halt-height = \"0\"/\"", filePath}, nil)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // chainAbsoluteGenesisFilePaths get absolute path of Genesis file of a chain
 func chainAbsoluteGenesisFilePaths(cfg ibc.ChainConfig) string {
 	return fmt.Sprintf("/var/cosmos-chain/%s/config", cfg.Name)
