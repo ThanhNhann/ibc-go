@@ -83,7 +83,7 @@ func SetGenesisContentsToContainer(t *testing.T, ctx context.Context, chain *cos
 }
 
 func ReconfigureHaltHeight(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain) error {
-	err := chain.Validators[0].CopyFile(ctx, "./scripts/reconfig.sh", "/")
+	err := chain.Validators[0].CopyFile(ctx, "./e2e/scripts/reconfig.sh", "/")
 	if err != nil {
 		return err
 	}
