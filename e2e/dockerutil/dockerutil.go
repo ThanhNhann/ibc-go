@@ -84,7 +84,7 @@ func SetGenesisContentsToContainer(t *testing.T, ctx context.Context, chain *cos
 
 func ReconfigureHaltHeight(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain) error {
 	// cmd := "sed -i \"s/halt-height = .*/halt-height = \"0\"/\""
-	_, _, err := chain.Validators[0].Exec(ctx, []string{"sed -i", fmt.Sprintf("/var/cosmos-chain/%s/config/app.toml", chain.Config().Name), "-e 's/halt-height = .*/halt-height = 0/'"}, nil)
+	_, _, err := chain.Validators[0].Exec(ctx, []string{"sed -i /var/cosmos-chain/simapp-a/config/app.toml -e 's/halt-height = .*/halt-height = 0/'"}, nil)
 	if err != nil {
 		return err
 	}
