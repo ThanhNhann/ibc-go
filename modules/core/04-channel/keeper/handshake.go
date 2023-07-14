@@ -29,6 +29,8 @@ func (k Keeper) ChanOpenInit(
 	version string,
 ) (string, *capabilitytypes.Capability, error) {
 	// connection hop length checked on msg.ValidateBasic()
+
+	println("go to ChanOpenInit")
 	connectionEnd, found := k.connectionKeeper.GetConnection(ctx, connectionHops[0])
 	if !found {
 		return "", nil, sdkerrors.Wrap(connectiontypes.ErrConnectionNotFound, connectionHops[0])
@@ -227,6 +229,7 @@ func (k Keeper) ChanOpenAck(
 	proofTry []byte,
 	proofHeight exported.Height,
 ) error {
+	println("go to ChanOpenAck")
 	channel, found := k.GetChannel(ctx, portID, channelID)
 	if !found {
 		return sdkerrors.Wrapf(types.ErrChannelNotFound, "port ID (%s) channel ID (%s)", portID, channelID)
